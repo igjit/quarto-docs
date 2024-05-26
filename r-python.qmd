@@ -1,0 +1,69 @@
+---
+title: "RとPython"
+format: gfm
+---
+
+## Rではいろいろなものが値を返す
+
+```{r}
+#| include: false
+cond <- TRUE
+```
+
+```{python}
+#| include: false
+cond = True
+```
+
+Rではいろいろなものが値を返す。
+例えばif文:
+
+```{r}
+val <- if (cond) 1 else -1
+```
+
+if文の結果を代入できる。
+
+Pythonのif文だとこう書くことになる。
+
+```{python}
+if cond:
+    val = 1
+else:
+    val = -1
+```
+
+もしくは条件式 (三項演算子) ならば結果を代入できる。
+
+```{python}
+val = 1 if cond else -1
+```
+
+もう一つの例としてswitchを見てみる。
+Rの場合
+
+```{r}
+name <- "two"
+val <- switch(name,
+              one = 1,
+              two = 2)
+val
+```
+
+switchの結果を代入できる。
+
+Pythonのmatch文 (Python 3.10以降) だとこう。
+
+```{python}
+name = "two"
+match name:
+    case "one":
+        val = 1
+    case "two":
+        val = 2
+
+val
+```
+
+Rではいろいろなものが値を返すので、それらを組み合わせて一つの大きな式の木を構成でき、より関数型っぽい感じで書ける。
+Pythonはそれよりは普通に制御構文を個々にかっちり書く感じがする。
