@@ -67,3 +67,64 @@ val
 
 Rではいろいろなものが値を返すので、それらを組み合わせて一つの大きな式の木を構成でき、より関数型っぽい感じで書ける。
 Pythonはそれよりは普通に制御構文を個々にかっちり書く感じがする。
+
+## 無名関数
+
+Rでは関数オブジェクトの生成と、それに名前を付けることは独立している。
+関数オブジェクトを生成:
+
+```{r}
+#| output: false
+function(x) x + 2
+```
+
+そのままではその関数にアクセスするすべがないので名前を付ける。
+
+```{r}
+add2 <- function(x) x + 2
+```
+
+一方、Pythonでは`def`で関数オブジェクトを作ってそれに名前を付ける。
+
+```{python}
+def add2(x):
+    return x + 2
+```
+
+Pythonで無名関数を生成するにはラムダ式を使う。
+
+```{python}
+#| output: false
+lambda x: x + 2
+```
+
+ラムダ式には制限がある。ラムダ式で生成する関数の本体は**式**でなければならない。例えば代入**文**を含めるとエラーとなる。
+
+```{python}
+#| eval: false
+# 構文エラー
+lambda l: (l[0] = 123)
+```
+
+これがJava VMを実装する上で問題となった例を挙げる。
+
+Java VM命令[iload_<n>](https://docs.oracle.com/javase/specs/jvms/se22/html/jvms-6.html#jvms-6.5.iload_n)を生成する関数は`lambda`を使って簡潔に書ける。
+
+```{python}
+#| eval: false
+def iload_n(n):
+    return lambda op, constant_pool, state: state.stack.append(state.frame[n])
+```
+
+一方[istore_<n>](https://docs.oracle.com/javase/specs/jvms/se22/html/jvms-6.html#jvms-6.5.istore_n)を生成する関数は`def`で関数に名前を付けてからそれを返す必要がある。
+
+```{python}
+#| eval: false
+def istore_n(n):
+    def f(op, constant_pool, state):
+        state.frame[n] = state.stack.pop()
+
+    return f
+```
+
+(コード全体は[こちら](https://github.com/igjit/jvmrp/blob/42d17b9e87249e0777bee7e2cb77c38507c1c443/src/jvmrp/operation.py))
