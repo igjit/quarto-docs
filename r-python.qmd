@@ -124,3 +124,31 @@ def istore_n(n):
 ```
 
 (コード全体は[こちら](https://github.com/igjit/jvmrp/blob/42d17b9e87249e0777bee7e2cb77c38507c1c443/src/jvmrp/operation.py))
+
+## オブジェクト指向プログラミング
+
+Pythonにはオブジェクト指向プログラミングのためのクラス機構があり、クラス定義のための構文が用意されている。
+クラス定義の例:
+
+```{python}
+class Counter:
+    def __init__(self):
+        self.n = 0
+
+    def increase(self):
+        self.n += 1
+        return self.n
+```
+
+Rではオブジェクトシステムが複数存在し、解きたい問題に応じて選択することができる。([OOP in R](https://adv-r.hadley.nz/oo.html#oop-in-r))
+前述のPythonのクラスをRの[R6](https://r6.r-lib.org/)オブジェクトシステムで再現すると
+
+```{r}
+Counter <- R6::R6Class("Counter", list(
+  n = 0,
+  increase = function() {
+    self$n <- self$n + 1
+    self$n
+  })
+)
+```
