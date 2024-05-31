@@ -140,8 +140,8 @@ class Counter:
         return self.n
 ```
 
-Rではオブジェクトシステムが複数存在し、解きたい問題に応じて選択することができる。([OOP in R](https://adv-r.hadley.nz/oo.html#oop-in-r))
-前述のPythonのクラスをRの[R6](https://r6.r-lib.org/)オブジェクトシステムで再現すると
+一方Rではオブジェクトシステムが複数存在し、解きたい問題に応じて選択することができる。([OOP in R](https://adv-r.hadley.nz/oo.html#oop-in-r))
+前述のPythonのクラスをRの[R6](https://r6.r-lib.org/)オブジェクトシステムで再現するとこうなる。
 
 ```{r}
 Counter <- R6::R6Class("Counter", list(
