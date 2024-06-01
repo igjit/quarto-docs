@@ -198,3 +198,15 @@ int.__add__(1, 2)
 
 - [R](https://github.com/igjit/jvmrr/blob/9bf7aa8fc01b825a11bad39894e8d95fe0f7aeb8/R/operation.R#L79-L89)
 - [Python](https://github.com/igjit/jvmrp/blob/42d17b9e87249e0777bee7e2cb77c38507c1c443/src/jvmrp/operation.py#L151-L155)
+
+## モジュール
+
+Pythonにはモジュールの仕組みがある。
+ファイルにPythonのコードを書いておけばそのファイルがモジュールとなり、他のスクリプトの中やインタプリタと対話中にimportして使うことができる。
+
+[Python チュートリアル 6. モジュール](https://docs.python.org/ja/3/tutorial/modules.html)
+
+Rにはそのような仕組みが無い。
+別ファイルに書かれたRのコードは[source](https://rdrr.io/r/base/source.html)で読み込むことができるが、これは単にファイルの中身をparseしてその場でevalするという原始的なもので、モジュール専用のネームスペースや初回のimport時のみ実行する仕組みなどの配慮は無い。
+
+Rのコードのモジュール化を提供するサードパーティーのパッケージはいくつか存在する (例: [box](https://klmr.me/box/))
