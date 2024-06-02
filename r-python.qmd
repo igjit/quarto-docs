@@ -1,7 +1,15 @@
 ---
-title: "RとPython"
+title: "RとPython両方でJava VMを実装して気づいた言語の違い"
 format: gfm
 ---
+
+最近、PythonでJava VMを実装した。
+
+https://github.com/igjit/jvmrp
+
+Java VMを実装したのは5年前にRで書いて以来2度目になる。(Rで実装したときのまとめ: [Java VM 自作 方法](https://igjit.github.io/posts/2019/12/building-your-own-java-vm/))
+
+異なる言語で同じものを作る過程で、両言語の違いや特徴を感じる場面があったので記録しておく。
 
 ## Rではいろいろなものが値を返す
 
