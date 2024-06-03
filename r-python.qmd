@@ -90,7 +90,7 @@ function(x) x + 2
 add2 <- function(x) x + 2
 ```
 
-一方、Pythonでは`def`で関数オブジェクトを作ってそれに名前を付ける。
+一方、Pythonではdefで関数オブジェクトを作ってそれに名前を付ける。
 
 ```{python}
 def add2(x):
@@ -114,7 +114,7 @@ lambda l: (l[0] = 123)
 
 これがJava VMを実装する上で問題となった例を挙げる。
 
-Java VM命令[iload_<n>](https://docs.oracle.com/javase/specs/jvms/se22/html/jvms-6.html#jvms-6.5.iload_n)を生成する関数は`lambda`を使って簡潔に書ける。
+Java VM命令[iload_<n>](https://docs.oracle.com/javase/specs/jvms/se22/html/jvms-6.html#jvms-6.5.iload_n)を生成する関数はlambdaを使って簡潔に書ける。
 
 ```{python}
 #| eval: false
@@ -122,7 +122,7 @@ def iload_n(n):
     return lambda op, constant_pool, state: state.stack.append(state.frame[n])
 ```
 
-一方[istore_<n>](https://docs.oracle.com/javase/specs/jvms/se22/html/jvms-6.html#jvms-6.5.istore_n)を生成する関数は`def`で関数に名前を付けてからそれを返す必要がある。
+一方[istore_<n>](https://docs.oracle.com/javase/specs/jvms/se22/html/jvms-6.html#jvms-6.5.istore_n)を生成する関数はdefで関数に名前を付けてからそれを返す必要がある。
 
 ```{python}
 #| eval: false
