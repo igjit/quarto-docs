@@ -1,6 +1,8 @@
 ---
 title: "RとPython両方でJava VMを実装して気づいた言語の違い"
-format: gfm
+format:
+  gfm:
+    wrap: preserve
 ---
 
 最近、PythonでJava VMを実装した。
