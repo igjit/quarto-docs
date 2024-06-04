@@ -1,0 +1,215 @@
+# RとPython両方でJava VMを実装して気づいた言語の違い
+
+
+最近、PythonでJava VMを実装した。
+
+https://github.com/igjit/jvmrp
+
+Java VMを実装したのは5年前にRで書いて以来2度目になる。(Rで実装したときのまとめ: [Java VM 自作 方法](https://igjit.github.io/posts/2019/12/building-your-own-java-vm/))
+
+異なる言語で同じものを作る過程で、両言語の違いや特徴を感じる場面があったので記録しておく。
+
+## Rではいろいろなものが値を返す
+
+Rではいろいろなものが値を返す。
+例えばRのif文は値を返すので結果を代入できる。
+
+``` r
+val <- if (cond) 1 else -1
+```
+
+Pythonのif文だとこう書くことになる。
+
+``` python
+if cond:
+    val = 1
+else:
+    val = -1
+```
+
+Pythonで結果を代入したい場合は条件式 (三項演算子) を使う必要がある。
+
+``` python
+val = 1 if cond else -1
+```
+
+もう一つの例としてswitchを見てみる。
+Rの場合、switchの結果を代入できる。
+
+``` r
+name <- "two"
+val <- switch(name,
+              one = 1,
+              two = 2)
+val
+```
+
+    [1] 2
+
+Pythonのmatch文 (Python 3.10以降) だとこう。
+
+``` python
+name = "two"
+match name:
+    case "one":
+        val = 1
+    case "two":
+        val = 2
+
+val
+```
+
+    2
+
+Rではいろいろなものが値を返すので、それらを組み合わせて一つの大きな式の木を構成でき、より関数型っぽい感じで書ける。
+Pythonはそれよりは普通に制御構文を個々にかっちり書く感じがする。
+
+## 無名関数
+
+Rでは関数オブジェクトの生成と、それに名前を付けることは独立している。
+関数オブジェクトを生成:
+
+``` r
+function(x) x + 2
+```
+
+あとで使うために生成した関数に名前を付ける。
+
+``` r
+add2 <- function(x) x + 2
+```
+
+一方、Pythonではdefで関数オブジェクトを作ってそれに名前を付ける。
+
+``` python
+def add2(x):
+    return x + 2
+```
+
+Pythonで無名関数を生成するにはラムダ式を使う。
+
+``` python
+lambda x: x + 2
+```
+
+ラムダ式には制限がある。ラムダ式で生成する関数の本体は**式**でなければならない。例えば代入**文**を含めるとエラーとなる。
+
+``` python
+# 構文エラー
+lambda l: (l[0] = 123)
+```
+
+これがJava VMを実装する上で問題となった例を挙げる。
+
+Java VM命令[iload\_<n>](https://docs.oracle.com/javase/specs/jvms/se22/html/jvms-6.html#jvms-6.5.iload_n)を生成する関数はlambdaを使って簡潔に書ける。
+
+``` python
+def iload_n(n):
+    return lambda op, constant_pool, state: state.stack.append(state.frame[n])
+```
+
+一方[istore\_<n>](https://docs.oracle.com/javase/specs/jvms/se22/html/jvms-6.html#jvms-6.5.istore_n)を生成する関数はdefで関数に名前を付けてからそれを返す必要がある。
+
+``` python
+def istore_n(n):
+    def f(op, constant_pool, state):
+        state.frame[n] = state.stack.pop()
+
+    return f
+```
+
+(コード全体は[こちら](https://github.com/igjit/jvmrp/blob/42d17b9e87249e0777bee7e2cb77c38507c1c443/src/jvmrp/operation.py))
+
+## オブジェクト指向プログラミング
+
+Pythonにはオブジェクト指向プログラミングのためのクラス機構がある。
+クラス定義の例:
+
+``` python
+class Counter:
+    def __init__(self):
+        self.n = 0
+
+    def increase(self):
+        self.n += 1
+        return self.n
+```
+
+一方Rではオブジェクトシステムが複数存在し、解きたい問題に応じて選択することができる。([OOP in R](https://adv-r.hadley.nz/oo.html#oop-in-r))
+前述のPythonのクラスをRの[R6](https://r6.r-lib.org/)オブジェクトシステムで再現するとこうなる。
+
+``` r
+Counter <- R6::R6Class("Counter", list(
+  n = 0,
+  increase = function() {
+    self$n <- self$n + 1
+    self$n
+  })
+)
+```
+
+Pythonのオブジェクトシステムは言語仕様によって提供されている。
+つまり[クラス定義](https://docs.python.org/ja/3/reference/compound_stmts.html#class-definitions)のための**構文**があり、**意味** (例えばメソッドが呼び出されたときの挙動) が言語で定められている。
+
+一方Rのオブジェクトシステムの一つ、R6はRのパッケージとして提供されている。R6は単なるRで書かれた便利なライブラリなのだ。
+上記のR6によるクラス定義の例を見ると、純粋なRの構文しか使っていないことがわかる。R6::R6Classは単なる関数だし、listを使ってメンバやメソッドをそれに渡している。
+
+オブジェクトシステムが言語仕様ではなくライブラリで提供されていると、言語本体の進化と独立してオブジェクトシステムを変更できるという利点がある。
+例えば言語本体をアップグレードせずに最新のオブジェクトシステムを使うことが可能になる。
+
+とはいえ、オブジェクトの定義みたいなよくやることは、専用の構文が用意されていたほうがすっきり簡潔に書けて良いと思う。
+
+## 演算子
+
+[高階関数](https://ja.wikipedia.org/wiki/%E9%AB%98%E9%9A%8E%E9%96%A2%E6%95%B0)、つまり関数を受け取ったり関数を返したりする関数が役に立つことがある。
+例えば、足し算の関数を与えたら足し算のVM命令を返す関数を作れば、残りの算術演算のVM命令を実装するのが楽になるだろう。
+ここでは演算子を関数オブジェクトとして扱う方法を見てみる。
+
+Rでは、起こる全てのことが関数呼び出しである。+は中置演算子だが
+
+``` r
+1 + 2
+```
+
+    [1] 3
+
+前置して関数として呼び出すこともできる。
+
+``` r
+`+`(1, 2)
+```
+
+    [1] 3
+
+Pythonでは、算術演算は特殊メソッドとして呼び出すことができる。
+
+``` python
+(1).__add__(2)
+```
+
+    3
+
+前置したい場合はこう:
+
+``` python
+int.__add__(1, 2)
+```
+
+    3
+
+これらを利用したVM命令の実装はこちら:
+
+- [R](https://github.com/igjit/jvmrr/blob/9bf7aa8fc01b825a11bad39894e8d95fe0f7aeb8/R/operation.R#L79-L89)
+- [Python](https://github.com/igjit/jvmrp/blob/42d17b9e87249e0777bee7e2cb77c38507c1c443/src/jvmrp/operation.py#L151-L155)
+
+## モジュール
+
+Pythonにはモジュールの仕組みがある。
+ファイルにPythonのコードを書いておけばそのファイルがモジュールとなり、他のスクリプトの中やインタプリタと対話中にimportして使うことができる。
+
+[Python チュートリアル 6. モジュール](https://docs.python.org/ja/3/tutorial/modules.html)
+
+Rにはそのような仕組みが無い。
+別ファイルに書かれたRのコードは[source](https://rdrr.io/r/base/source.html)で読み込むことができるが、これは単にファイルの中身をparseしてその場でevalするという原始的なもので、モジュール専用のネームスペースや初回のimport時のみ実行する仕組みなどの配慮は無い。
+
+Rのコードのモジュール化を提供するサードパーティーのパッケージはいくつか存在する (例: [box](https://klmr.me/box/))
